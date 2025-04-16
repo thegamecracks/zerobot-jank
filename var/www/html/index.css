@@ -1,0 +1,49 @@
+html {
+    color-scheme: light dark;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+
+    margin-left: auto;
+    margin-right: auto;
+    font-family: Tahoma, Verdana, Arial, sans-serif;
+
+    >* {
+        width: 100%;
+    }
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+
+    >* {
+        min-height: 3rem;
+    }
+}
+
+#bot-controls {
+    align-content: center;
+}
+
+#bot-log {
+    width: 20rem;
+    height: 10rem;
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <title>Robot Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="index.css" rel="stylesheet">
+    <script src="index.js" defer></script>
+</head>
+
+<body>
+    <iframe height="480" src="http://127.0.0.1:8889/cam" frameborder="0" allowfullscreen></iframe>
+    <div class="row">
+        <p id="bot-status"></p>
+    </div>
+    <div class="row">
+        <div class="keypad">
+            <div></div>
+            <button id="bot-forward">Forward</button>
+            <div></div>
+
+            <button id="bot-left">Left</button>
+            <div></div>
+            <button id="bot-right">Right</button>
+
+            <div></div>
+            <button id="bot-back">Back</button>
+            <div></div>
+        </div>
+        <textarea id="bot-log" disabled></textarea>
+    </div>
+</body>
+
+</html>
