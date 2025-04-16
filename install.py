@@ -72,7 +72,7 @@ def main() -> None:
     copy_html_files(dry_run=dry_run)
     update_nginx_config(dry_run=dry_run)
 
-    maybe_create_venv(dry_run=dry_run)
+    maybe_create_venv(apt_cache, dry_run=dry_run)
 
     update_mediamtx_service(dry_run=dry_run)
     update_controller_service(dry_run=dry_run)
@@ -207,17 +207,34 @@ def wait_for_nginx_conf() -> None:
     sys.exit(f"Waiting for {conf} timed out, aborting")
 
 
-def maybe_create_venv(*, dry_run: bool) -> None:
+def maybe_create_venv(apt_cache: AptCache, *, dry_run: bool) -> None:
     venv = PROJECT_ROOT.joinpath(".venv")
     if venv.is_dir():
         return
-    elif dry_run:
+
+    maybe_install_python_dev(apt_cache, dry_run=dry_run)
+
+    if dry_run:
         return print("Would create controller.py virtual environment")
 
     print(f"Creating controller.py virtual environment...")
     check_call(sys.executable, "-m", "venv", venv)
     print("Installing controller.py dependencies...")
     check_call(venv / "bin/pip", "install", "-r", PROJECT_ROOT / "requirements.txt")
+
+
+def maybe_install_python_dev(apt_cache: AptCache, *, dry_run: bool) -> None:
+    dev = apt_cache["python3-dev"]
+    if dev.is_installed:
+        return
+
+    update_apt(apt_cache, dry_run=dry_run)
+    if dry_run:
+        print("Would install python3-dev")
+    else:
+        print("Installing python3-dev...")
+        dev.mark_install()
+        apt_cache.commit()
 
 
 def update_mediamtx_service(*, dry_run: bool) -> None:
