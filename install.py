@@ -62,6 +62,7 @@ def main() -> None:
     apt_cache.open()
 
     maybe_install_nginx(apt_cache, dry_run=dry_run)
+    copy_html_files(dry_run=dry_run)
     update_nginx_config(dry_run=dry_run)
 
     maybe_create_venv(dry_run=dry_run)
@@ -131,6 +132,14 @@ def maybe_install_nginx(apt_cache: AptCache, *, dry_run: bool) -> None:
         apt_cache.commit()
 
 
+def copy_html_files(*, dry_run: bool) -> None:
+    if dry_run:
+        return print("Would copy HTML files to /var/www/html/zerobot")
+
+    print("Copying HTML files to /var/www/html/zerobot")
+    shutil.copytree(PROJECT_ROOT / "html", "/var/www/html/zerobot", dirs_exist_ok=True)
+
+
 def update_nginx_config(*, dry_run: bool) -> None:
     default = Path("/etc/nginx/sites-enabled/default")
     if not default.is_file():
@@ -155,9 +164,7 @@ def update_nginx_config(*, dry_run: bool) -> None:
     else:
         print("Copying nginx configuration to /etc/nginx/sites-available/...")
         for src, dest in zip(src_sites, dest_sites):
-            content = src.read_text("utf8")
-            content = replace_site_substitutions(content)
-            dest.write_text(content)
+            shutil.copyfile(src, dest)
 
         print("Adding symlinks to /etc/nginx/sites-enabled/...")
         for dest in dest_sites:
@@ -170,15 +177,6 @@ def update_nginx_config(*, dry_run: bool) -> None:
         wait_for_nginx_conf()
         print("Reloading nginx...")
         check_call("systemctl", "restart", "nginx")
-
-
-def replace_site_substitutions(content: str) -> str:
-    # Nginx also uses $-placeholders, so we're just going to do safe subsitution.
-    return string.Template(content).safe_substitute(
-        {
-            "PROJECT": PROJECT_ROOT,
-        }
-    )
 
 
 def wait_for_nginx_conf() -> None:
