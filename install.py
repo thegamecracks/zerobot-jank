@@ -95,6 +95,7 @@ def maybe_download_mediamtx(*, dry_run: bool) -> None:
             shutil.copyfileobj(response, f)
 
         print("Extracting to /usr/local/bin/...")
+        f.seek(0)
         with tarfile.open(fileobj=f, mode="r:gz") as archive:
             archive.extract("mediamtx", "/usr/local/bin")
 
