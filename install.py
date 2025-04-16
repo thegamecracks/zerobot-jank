@@ -29,6 +29,7 @@ user = getpass.getuser()
 if user != "root":
     sys.exit(f"Current user is {user}, must run script as root (e.g. with sudo)")
 
+PROJECT_ROOT = Path(__file__).parent.resolve()
 MEDIAMTX_SOURCES = {
     "armv7l": "https://github.com/bluenviron/mediamtx/releases/download/v1.12.0/mediamtx_v1.12.0_linux_armv7.tar.gz",
     "aarch64": "https://github.com/bluenviron/mediamtx/releases/download/v1.12.0/mediamtx_v1.12.0_linux_arm64v8.tar.gz",
@@ -140,10 +141,9 @@ def update_nginx_config(*, dry_run: bool) -> None:
         print("Removing default nginx site configuration...")
         default.unlink()
 
-    src_sites = list(Path("etc/nginx/sites-available").iterdir())
+    src_sites = list(PROJECT_ROOT.joinpath("etc/nginx/sites-available").iterdir())
     dest_sites: list[Path] = [
-        Path("/etc/nginx/sites-available").joinpath(path.name)
-        for path in src_sites
+        Path("/etc/nginx/sites-available") / path.name for path in src_sites
     ]
 
     if not src_sites:
@@ -170,11 +170,10 @@ def update_nginx_config(*, dry_run: bool) -> None:
 
 
 def replace_site_substitutions(content: str) -> str:
-    project_root = Path(__file__).parent
     # Nginx also uses $-placeholders, so we're just going to do safe subsitution.
     return string.Template(content).safe_substitute(
         {
-            "PROJECT": project_root,
+            "PROJECT": PROJECT_ROOT,
         }
     )
 
@@ -196,43 +195,44 @@ def wait_for_nginx_conf() -> None:
 
 
 def maybe_create_venv(*, dry_run: bool) -> None:
-    if Path(".venv").is_dir():
+    venv = PROJECT_ROOT.joinpath(".venv")
+    if venv.is_dir():
         return
     elif dry_run:
         return print("Would create controller.py virtual environment")
 
-    print("Creating controller.py virtual environment at .venv/...")
+    print(f"Creating controller.py virtual environment...")
     check_call(sys.executable, "-m", "venv")
     print("Installing controller.py dependencies...")
-    check_call(".venv/bin/pip", "install", "-r", "requirements.txt")
+    check_call(venv / "bin/pip", "install", "-r", PROJECT_ROOT / "requirements.txt")
 
 
 def update_mediamtx_service(*, dry_run: bool) -> None:
-    if dry_run:
-        return print("Would copy zerobot-mediamtx.service to /etc/systemd/system/")
-
-    print("Copying zerobot-mediamtx.service to /etc/systemd/system/...")
-    content = Path("etc/systemd/system/zerobot-mediamtx.service").read_text("utf8")
-    content = replace_service_substitutions(content)
-    Path("/etc/systemd/system/zerobot-mediamtx.service").write_text(content, "utf8")
+    src = PROJECT_ROOT / "etc/systemd/system/zerobot-mediamtx.service"
+    copy_service_file(src, dry_run=dry_run)
 
 
 def update_controller_service(*, dry_run: bool) -> None:
-    if dry_run:
-        return print("Would copy zerobot-controller.service to /etc/systemd/system/")
+    src = PROJECT_ROOT / "etc/systemd/system/zerobot-controller.service"
+    copy_service_file(src, dry_run=dry_run)
 
-    print("Copying zerobot-controller.service to /etc/systemd/system/...")
-    content = Path("etc/systemd/system/zerobot-controller.service").read_text("utf8")
+
+def copy_service_file(src: Path, *, dry_run: bool) -> None:
+    if dry_run:
+        return print(f"Would copy {src.name} to /etc/systemd/system/")
+
+    print(f"Copying {src.name} to /etc/systemd/system/...")
+    dest = Path("/etc/systemd/system") / src.name
+    content = src.read_text("utf8")
     content = replace_service_substitutions(content)
-    Path("/etc/systemd/system/zerobot-controller.service").write_text(content, "utf8")
+    dest.write_text(content, "utf8")
 
 
 def replace_service_substitutions(content: str) -> str:
-    project_root = Path(__file__).parent
     return string.Template(content).substitute(
         {
-            "PROJECT": project_root,
-            "PYTHON": project_root / ".venv/bin/python",
+            "PROJECT": PROJECT_ROOT,
+            "PYTHON": PROJECT_ROOT / ".venv/bin/python",
         }
     )
 
