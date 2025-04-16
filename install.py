@@ -8,7 +8,6 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-import time
 import urllib.request
 from pathlib import Path
 
@@ -186,25 +185,8 @@ def update_nginx_config(*, dry_run: bool) -> None:
 
             link.symlink_to(dest)
 
-        wait_for_nginx_conf()
         print("Restarting nginx...")
         check_call("systemctl", "restart", "nginx")
-
-
-def wait_for_nginx_conf() -> None:
-    conf = Path("/etc/nginx/nginx.conf")
-    if conf.is_file():
-        return
-
-    # This is a really jank fix, but for some reason this file might not
-    # be created before we attempt to restart the service.
-    print(f"Waiting for apt to create {conf}...")
-    for _ in range(10):
-        time.sleep(0.5)
-        if conf.is_file():
-            return
-
-    sys.exit(f"Waiting for {conf} timed out, aborting")
 
 
 def maybe_create_venv(apt_cache: AptCache, *, dry_run: bool) -> None:
