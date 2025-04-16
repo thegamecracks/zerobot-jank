@@ -145,10 +145,10 @@ def maybe_install_nginx(apt_cache: AptCache, *, dry_run: bool) -> None:
 
 def copy_html_files(*, dry_run: bool) -> None:
     if dry_run:
-        return print("Would copy HTML files to /var/www/html/zerobot")
+        return print("Would copy HTML files to /var/www/html/")
 
-    print("Copying HTML files to /var/www/html/zerobot")
-    shutil.copytree(PROJECT_ROOT / "html", "/var/www/html/zerobot", dirs_exist_ok=True)
+    print("Copying HTML files to /var/www/html/")
+    shutil.copytree(PROJECT_ROOT / "var/www/html/", "/var/www/html/", dirs_exist_ok=True)
 
 
 def update_nginx_config(*, dry_run: bool) -> None:
