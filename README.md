@@ -12,7 +12,14 @@ Assuming a fresh image of Raspberry Pi 12 (Bookworm), 32-bit or 64-bit:
     $ sudo reboot
     ```
 
-2. Git clone this repository
+2. Clone this repository:
+
+    ```sh
+    $ sudo apt install git
+    $ git clone https://github.com/thegamecracks/zerobot-jank
+    $ cd zerobot-jank
+    ```
+
 3. Run install.py as root:
 
     ```sh
