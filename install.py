@@ -12,9 +12,10 @@ import time
 import urllib.request
 from pathlib import Path
 
-arch = platform.machine()
-if arch not in ("armv7l", "aarch64"):
-    sys.exit(f"System architecture is {arch}, must be one of armv7l, aarch64")
+ALLOWED_ARCHITECTURES = ("armv7l", "aarch64")
+ARCH = platform.machine()
+if ARCH not in ALLOWED_ARCHITECTURES:
+    sys.exit(f"System architecture is {ARCH}, must be one of armv7l, aarch64")
 
 try:
     from apt.cache import Cache as AptCache
@@ -46,6 +47,11 @@ def main() -> None:
         help="Only print actions that would be taken",
     )
     parser.add_argument(
+        "--force-mediamtx-arch",
+        choices=ALLOWED_ARCHITECTURES,
+        help="(Re)install mediamtx with the given architecture",
+    )
+    parser.add_argument(
         "--skip-camera",
         action="store_true",
         help="Continue when camera is undetected",
@@ -53,10 +59,11 @@ def main() -> None:
 
     args = parser.parse_args()
     dry_run: bool = args.dry_run
+    force_mediamtx_arch: str = args.force_mediamtx_arch
     skip_camera: bool = args.skip_camera
 
     check_camera(skip_camera=skip_camera)
-    maybe_download_mediamtx(dry_run=dry_run)
+    maybe_download_mediamtx(dry_run=dry_run, force_mediamtx_arch=force_mediamtx_arch)
 
     apt_cache = AptCache()
     apt_cache.open()
@@ -86,12 +93,17 @@ def check_camera(*, skip_camera: bool) -> None:
         )
 
 
-def maybe_download_mediamtx(*, dry_run: bool) -> None:
-    if Path("/usr/local/bin/mediamtx").is_file():
+def maybe_download_mediamtx(
+    *,
+    dry_run: bool,
+    force_mediamtx_arch: str | None = None,
+) -> None:
+    if Path("/usr/local/bin/mediamtx").is_file() and force_mediamtx_arch is None:
         return
     elif dry_run:
         return print("Would download mediamtx to /usr/local/bin/")
 
+    arch = force_mediamtx_arch or ARCH
     print("Downloading mediamtx...")
     with tempfile.TemporaryFile("wb+") as f:
         with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
