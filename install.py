@@ -84,7 +84,7 @@ def update_nginx_config() -> None:
         default.unlink()
 
     print("Copying nginx configuration to /etc/nginx/sites-available/...")
-    sites = Path("etc/nginx/sites-available").iterdir()
+    sites = list(Path("etc/nginx/sites-available").iterdir())
     for path in sites:
         content = path.read_text("utf8")
         content = replace_site_substitutions(content)
