@@ -92,7 +92,7 @@ def maybe_download_mediamtx(*, dry_run: bool) -> None:
         f = io.BytesIO(response.read())
 
     print("Extracting to /usr/local/bin/...")
-    with tarfile.TarFile(fileobj=f, mode="r:gz") as archive:
+    with tarfile.open(fileobj=f, mode="r:gz") as archive:
         archive.extract("mediamtx", "/usr/local/bin")
 
 
