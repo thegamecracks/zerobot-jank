@@ -34,6 +34,8 @@ MEDIAMTX_SOURCES = {
     "aarch64": "https://github.com/bluenviron/mediamtx/releases/download/v1.12.0/mediamtx_v1.12.0_linux_arm64v8.tar.gz",
 }
 
+apt_updated = False
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -56,7 +58,6 @@ def main() -> None:
     maybe_download_mediamtx(dry_run=dry_run)
 
     apt_cache = AptCache()
-    update_apt(apt_cache, dry_run=dry_run)
     apt_cache.open()
 
     maybe_install_nginx(apt_cache, dry_run=dry_run)
@@ -101,18 +102,27 @@ def maybe_download_mediamtx(*, dry_run: bool) -> None:
 
 
 def update_apt(apt_cache: AptCache, *, dry_run: bool) -> None:
-    if dry_run:
+    global apt_updated
+
+    if apt_updated:
+        return
+    elif dry_run:
         print("Would update apt package index")
+        apt_updated = True
     else:
         print("Updating apt package index...")
         apt_cache.update()
+        apt_cache.open()
+        apt_updated = True
 
 
 def maybe_install_nginx(apt_cache: AptCache, *, dry_run: bool) -> None:
     nginx = apt_cache["nginx"]
     if nginx.is_installed:
         return
-    elif dry_run:
+
+    update_apt(apt_cache, dry_run=dry_run)
+    if dry_run:
         print("Would install nginx")
     else:
         print("Installing nginx...")
