@@ -7,6 +7,9 @@ Environment="PYTHONUNBUFFERED=1"
 ExecStart=${PYTHON} ${PROJECT}/controller.py
 Type=simple
 Restart=always
+RestartSec=3
+RestartSteps=3
+RestartMaxDelaySec=60
 KillSignal=SIGINT
 
 [Install]
