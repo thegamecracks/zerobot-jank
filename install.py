@@ -97,12 +97,12 @@ def maybe_download_mediamtx(
     dry_run: bool,
     force_mediamtx_arch: str | None = None,
 ) -> None:
+    arch = force_mediamtx_arch or ARCH
     if Path("/usr/local/bin/mediamtx").is_file() and force_mediamtx_arch is None:
         return
     elif dry_run:
-        return print("Would download mediamtx to /usr/local/bin/")
+        return print(f"Would download mediamtx {arch} to /usr/local/bin/")
 
-    arch = force_mediamtx_arch or ARCH
     print(f"Downloading mediamtx {arch}...")
     with tempfile.TemporaryFile("wb+") as f:
         with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
