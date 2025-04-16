@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
 
@@ -148,6 +149,7 @@ def update_nginx_config(*, dry_run: bool) -> None:
             dest = Path("/etc/nginx/sites-enabled").joinpath(path.name)
             dest.symlink_to(path)
 
+        wait_for_nginx_conf()
         print("Reloading nginx...")
         check_call("systemctl", "restart", "nginx")
 
@@ -160,6 +162,22 @@ def replace_site_substitutions(content: str) -> str:
             "PROJECT": project_root,
         }
     )
+
+
+def wait_for_nginx_conf() -> None:
+    conf = Path("/etc/nginx/nginx.conf")
+    if conf.is_file():
+        return
+
+    # This is a really jank fix, but for some reason this file might not
+    # be created before we attempt to restart the service.
+    print(f"Waiting for apt to create {conf}...")
+    for _ in range(10):
+        time.sleep(0.5)
+        if conf.is_file():
+            return
+
+    sys.exit(f"Waiting for {conf} timed out, aborting")
 
 
 def maybe_create_venv(*, dry_run: bool) -> None:
