@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import getpass
 import io
 import platform
@@ -33,32 +34,58 @@ MEDIAMTX_SOURCES = {
 
 
 def main() -> None:
-    check_camera()
-    maybe_download_mediamtx()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print actions that would be taken",
+    )
+    parser.add_argument(
+        "--skip-camera",
+        action="store_true",
+        help="Continue when camera is undetected",
+    )
+
+    args = parser.parse_args()
+    dry_run: bool = args.dry_run
+    skip_camera: bool = args.skip_camera
+
+    check_camera(skip_camera=skip_camera)
+    maybe_download_mediamtx(dry_run=dry_run)
 
     apt_cache = AptCache()
-    apt_cache.update()
+    update_apt(apt_cache, dry_run=dry_run)
     apt_cache.open()
 
-    maybe_install_nginx(apt_cache)
-    update_nginx_config()
+    maybe_install_nginx(apt_cache, dry_run=dry_run)
+    update_nginx_config(dry_run=dry_run)
 
-    maybe_create_venv()
+    maybe_create_venv(dry_run=dry_run)
 
-    update_mediamtx_service()
-    update_controller_service()
-    restart_services()
+    update_mediamtx_service(dry_run=dry_run)
+    update_controller_service(dry_run=dry_run)
+    restart_services(dry_run=dry_run)
 
 
-def check_camera() -> None:
+def check_camera(*, skip_camera: bool) -> None:
     output = check_output("rpicam-hello", "--list-cameras")
-    if output == "No cameras available!":
-        sys.exit("Could not detect Raspberry Pi Camera, aborting")
+    if output != "No cameras available!":
+        print("Raspberry Pi camera detected")
+    elif skip_camera:
+        print("Raspberry Pi camera not detected, ignoring.")
+    else:
+        sys.exit(
+            "Raspberry Pi camera not detected, aborting.\n"
+            "If you really want to continue setup, re-run this script "
+            "with the --skip-camera flag."
+        )
 
 
-def maybe_download_mediamtx() -> None:
+def maybe_download_mediamtx(*, dry_run: bool) -> None:
     if Path("/usr/local/bin/mediamtx").is_file():
         return
+    elif dry_run:
+        return print("Would download mediamtx to /usr/local/bin/")
 
     print("Downloading mediamtx...")
     with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
@@ -69,35 +96,58 @@ def maybe_download_mediamtx() -> None:
         archive.extract("mediamtx", "/usr/local/bin")
 
 
-def maybe_install_nginx(apt_cache: AptCache) -> None:
+def update_apt(apt_cache: AptCache, *, dry_run: bool) -> None:
+    if dry_run:
+        print("Would update apt package index")
+    else:
+        print("Updating apt package index...")
+        apt_cache.update()
+
+
+def maybe_install_nginx(apt_cache: AptCache, *, dry_run: bool) -> None:
     nginx = apt_cache["nginx"]
-    if not nginx.is_installed:
+    if nginx.is_installed:
+        return
+    elif dry_run:
+        print("Would install nginx")
+    else:
         print("Installing nginx...")
         nginx.mark_install()
         apt_cache.commit()
 
 
-def update_nginx_config() -> None:
+def update_nginx_config(*, dry_run: bool) -> None:
     default = Path("/etc/nginx/sites-enabled/default")
-    if default.is_file():
+    if not default.is_file():
+        pass
+    elif dry_run:
+        print("Would remove default nginx site configuration")
+    else:
         print("Removing default nginx site configuration...")
         default.unlink()
 
-    print("Copying nginx configuration to /etc/nginx/sites-available/...")
     sites = list(Path("etc/nginx/sites-available").iterdir())
-    for path in sites:
-        content = path.read_text("utf8")
-        content = replace_site_substitutions(content)
-        dest = Path("/etc/nginx/sites-available").joinpath(path.name)
-        dest.write_text(content)
+    if not sites:
+        pass
+    elif dry_run:
+        print("Would copy nginx configuration to /etc/nginx/sites-available/")
+        print("Would add symlinks to /etc/nginx/sites-enabled/")
+        print("Would reload nginx")
+    else:
+        print("Copying nginx configuration to /etc/nginx/sites-available/...")
+        for path in sites:
+            content = path.read_text("utf8")
+            content = replace_site_substitutions(content)
+            dest = Path("/etc/nginx/sites-available").joinpath(path.name)
+            dest.write_text(content)
 
-    print("Adding symlinks to /etc/nginx/sites-enabled/...")
-    for path in sites:
-        dest = Path("/etc/nginx/sites-enabled").joinpath(path.name)
-        dest.symlink_to(path)
+        print("Adding symlinks to /etc/nginx/sites-enabled/...")
+        for path in sites:
+            dest = Path("/etc/nginx/sites-enabled").joinpath(path.name)
+            dest.symlink_to(path)
 
-    print("Reloading nginx...")
-    check_call("systemctl", "restart", "nginx")
+        print("Reloading nginx...")
+        check_call("systemctl", "restart", "nginx")
 
 
 def replace_site_substitutions(content: str) -> str:
@@ -110,9 +160,11 @@ def replace_site_substitutions(content: str) -> str:
     )
 
 
-def maybe_create_venv() -> None:
+def maybe_create_venv(*, dry_run: bool) -> None:
     if Path(".venv").is_dir():
         return
+    elif dry_run:
+        return print("Would create controller.py virtual environment")
 
     print("Creating controller.py virtual environment at .venv/...")
     check_call(sys.executable, "-m", "venv")
@@ -120,14 +172,20 @@ def maybe_create_venv() -> None:
     check_call(".venv/bin/pip", "install", "-r", "requirements.txt")
 
 
-def update_mediamtx_service() -> None:
+def update_mediamtx_service(*, dry_run: bool) -> None:
+    if dry_run:
+        return print("Would copy zerobot-mediamtx.service to /etc/systemd/system/")
+
     print("Copying zerobot-mediamtx.service to /etc/systemd/system/...")
     content = Path("etc/systemd/system/zerobot-mediamtx.service").read_text("utf8")
     content = replace_service_substitutions(content)
     Path("/etc/systemd/system/zerobot-mediamtx.service").write_text(content, "utf8")
 
 
-def update_controller_service() -> None:
+def update_controller_service(*, dry_run: bool) -> None:
+    if dry_run:
+        return print("Would copy zerobot-controller.service to /etc/systemd/system/")
+
     print("Copying zerobot-controller.service to /etc/systemd/system/...")
     content = Path("etc/systemd/system/zerobot-controller.service").read_text("utf8")
     content = replace_service_substitutions(content)
@@ -144,7 +202,10 @@ def replace_service_substitutions(content: str) -> str:
     )
 
 
-def restart_services() -> None:
+def restart_services(*, dry_run: bool) -> None:
+    if dry_run:
+        return print("Would reload and restart services")
+
     print("Reloading services...")
     check_call("systemctl", "daemon-reload")
 
