@@ -199,7 +199,7 @@ def maybe_create_venv(apt_cache: AptCache, *, dry_run: bool) -> None:
     if dry_run:
         return print("Would create controller.py virtual environment")
 
-    print(f"Creating controller.py virtual environment...")
+    print("Creating controller.py virtual environment...")
     check_call(sys.executable, "-m", "venv", venv)
     print("Installing controller.py dependencies...")
     check_call(venv / "bin/pip", "install", "-r", PROJECT_ROOT / "requirements.txt")
