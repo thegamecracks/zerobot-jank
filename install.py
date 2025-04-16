@@ -202,7 +202,7 @@ def maybe_create_venv(*, dry_run: bool) -> None:
         return print("Would create controller.py virtual environment")
 
     print(f"Creating controller.py virtual environment...")
-    check_call(sys.executable, "-m", "venv")
+    check_call(sys.executable, "-m", "venv", venv)
     print("Installing controller.py dependencies...")
     check_call(venv / "bin/pip", "install", "-r", PROJECT_ROOT / "requirements.txt")
 
