@@ -172,7 +172,7 @@ def update_nginx_config(*, dry_run: bool) -> None:
     elif dry_run:
         print("Would copy nginx configuration to /etc/nginx/sites-available/")
         print("Would add symlinks to /etc/nginx/sites-enabled/")
-        print("Would reload nginx")
+        print("Would restart nginx")
     else:
         print("Copying nginx configuration to /etc/nginx/sites-available/...")
         for src, dest in zip(src_sites, dest_sites):
@@ -187,7 +187,7 @@ def update_nginx_config(*, dry_run: bool) -> None:
             link.symlink_to(dest)
 
         wait_for_nginx_conf()
-        print("Reloading nginx...")
+        print("Restarting nginx...")
         check_call("systemctl", "restart", "nginx")
 
 
