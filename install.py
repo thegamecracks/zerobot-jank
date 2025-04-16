@@ -209,13 +209,11 @@ def restart_services(*, dry_run: bool) -> None:
     print("Reloading services...")
     check_call("systemctl", "daemon-reload")
 
-    print("Enabling and restarting zerobot-mediamtx.service...")
-    check_call("systemctl", "enable", "zerobot-mediamtx")
-    check_call("systemctl", "restart", "zerobot-mediamtx")
+    print("Enabling services...")
+    check_call("systemctl", "enable", "zerobot-mediamtx", "zerobot-controller")
 
-    print("Enabling and restarting zerobot-controller.service...")
-    check_call("systemctl", "enable", "zerobot-controller")
-    check_call("systemctl", "restart", "zerobot-controller")
+    print("Restarting services...")
+    check_call("systemctl", "restart", "zerobot-mediamtx", "zerobot-controller")
 
 
 def check_call(*args: object) -> None:
