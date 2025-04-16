@@ -6,8 +6,8 @@ import platform
 import string
 import subprocess
 import sys
+import tarfile
 import urllib.request
-import zipfile
 from pathlib import Path
 
 arch = platform.machine()
@@ -92,7 +92,7 @@ def maybe_download_mediamtx(*, dry_run: bool) -> None:
         f = io.BytesIO(response.read())
 
     print("Extracting to /usr/local/bin/...")
-    with zipfile.ZipFile(f) as archive:
+    with tarfile.TarFile(fileobj=f, mode="r:gz") as archive:
         archive.extract("mediamtx", "/usr/local/bin")
 
 
