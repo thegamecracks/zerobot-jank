@@ -104,7 +104,7 @@ def maybe_download_mediamtx(
         return print("Would download mediamtx to /usr/local/bin/")
 
     arch = force_mediamtx_arch or ARCH
-    print("Downloading mediamtx...")
+    print(f"Downloading mediamtx {arch}...")
     with tempfile.TemporaryFile("wb+") as f:
         with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
             shutil.copyfileobj(response, f)
