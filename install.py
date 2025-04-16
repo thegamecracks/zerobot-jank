@@ -162,6 +162,9 @@ def update_nginx_config(*, dry_run: bool) -> None:
         print("Adding symlinks to /etc/nginx/sites-enabled/...")
         for dest in dest_sites:
             link = Path("/etc/nginx/sites-enabled").joinpath(dest.name)
+            if link.resolve() == dest:
+                continue
+
             link.symlink_to(dest)
 
         wait_for_nginx_conf()
