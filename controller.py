@@ -2,7 +2,10 @@
 import asyncio
 import logging
 import time
+from contextlib import contextmanager
+from typing import Iterator
 
+import RPi.GPIO as GPIO
 from websockets.asyncio.server import ServerConnection, serve
 
 # The current movement command, consisting of a timeout, y strength, and x strength.
@@ -14,16 +17,36 @@ last_movement: tuple[float, float] = (0, 0)
 
 
 async def main() -> None:
-    init_gpio()
+    with init_gpio():
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(run_server())
+            tg.create_task(process_movement_queue())
 
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(run_server())
-        tg.create_task(process_movement_queue())
 
+@contextmanager
+def init_gpio() -> Iterator[None]:
+    global M1, M2
 
-def init_gpio() -> None:
-    # TODO: add imports and setup GPIO here
-    pass
+    GPIO.setmode(GPIO.BOARD)
+
+    GPIO.setup(7, GPIO.OUT)
+    GPIO.setup(11, GPIO.OUT)
+    GPIO.setup(13, GPIO.OUT)
+    GPIO.setup(15, GPIO.OUT)
+    GPIO.setup(32, GPIO.OUT)
+    GPIO.setup(33, GPIO.OUT)
+
+    M1 = GPIO.PWM(32, 255)
+    M2 = GPIO.PWM(33, 255)
+    M1.start(0)
+    M2.start(0)
+
+    try:
+        yield
+    finally:
+        M1.stop()
+        M2.stop()
+        GPIO.cleanup()
 
 
 async def run_server() -> None:
@@ -103,10 +126,42 @@ def evaluate_movement() -> None:
 
 
 def update_motor_pins(y: float, x: float) -> None:
-    # TODO: start the appropriate movement
     # y > 0 for forwards, y < 0 for backwards
     # x > 0 for right, x < 0 for left
-    pass
+    # TODO: add support for multi-directional movement and analog controls
+    if y > 0:
+        M1.ChangeDutyCycle(25)
+        M2.ChangeDutyCycle(25)
+        GPIO.output(7, False)
+        GPIO.output(11, True)
+        GPIO.output(13, True)
+        GPIO.output(15, False)
+    elif y < 0:
+        M1.ChangeDutyCycle(30)
+        M2.ChangeDutyCycle(30)
+        GPIO.output(7, True)
+        GPIO.output(11, False)
+        GPIO.output(13, False)
+        GPIO.output(15, True)
+    elif x > 0:
+        M1.ChangeDutyCycle(20)
+        M2.ChangeDutyCycle(20)
+        GPIO.output(7, True)
+        GPIO.output(11, False)
+        GPIO.output(13, True)
+        GPIO.output(15, False)
+    elif x < 0:
+        M1.ChangeDutyCycle(20)
+        M2.ChangeDutyCycle(20)
+        GPIO.output(7, False)
+        GPIO.output(11, True)
+        GPIO.output(13, False)
+        GPIO.output(15, True)
+    else:
+        GPIO.output(7, False)
+        GPIO.output(11, False)
+        GPIO.output(13, False)
+        GPIO.output(15, False)
 
 
 if __name__ == "__main__":
