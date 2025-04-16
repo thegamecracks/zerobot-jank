@@ -81,7 +81,7 @@ def main() -> None:
 
 def check_camera(*, skip_camera: bool) -> None:
     output = check_output("rpicam-hello", "--list-cameras")
-    if output != "No cameras available!":
+    if "No cameras available!" not in output:
         print("Raspberry Pi camera detected")
     elif skip_camera:
         print("Raspberry Pi camera not detected, ignoring.")
