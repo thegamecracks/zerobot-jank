@@ -147,7 +147,7 @@ def copy_html_files(*, dry_run: bool) -> None:
     if dry_run:
         return print("Would copy HTML files to /var/www/html/")
 
-    print("Copying HTML files to /var/www/html/")
+    print("Copying HTML files to /var/www/html/...")
     shutil.copytree(PROJECT_ROOT / "var/www/html/", "/var/www/html/", dirs_exist_ok=True)
 
 
