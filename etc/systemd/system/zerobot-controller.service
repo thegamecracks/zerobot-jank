@@ -1,0 +1,13 @@
+[Unit]
+Description=Zerobot controller websocket server
+After=network.target
+
+[Service]
+ExecStart=${PYTHON} ${PROJECT}/controller.py
+Type=simple
+Restart=always
+KillSignal=SIGINT
+
+[Install]
+WantedBy=default.target
+RequiredBy=network.target

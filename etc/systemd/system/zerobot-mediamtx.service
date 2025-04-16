@@ -1,0 +1,13 @@
+[Unit]
+Description=Zerobot MediaMTX server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/mediamtx ${PROJECT}/mediamtx.yml
+Type=simple
+Restart=always
+KillSignal=SIGINT
+
+[Install]
+WantedBy=default.target
+RequiredBy=network.target
