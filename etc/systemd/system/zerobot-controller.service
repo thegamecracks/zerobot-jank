@@ -3,6 +3,7 @@ Description=Zerobot controller websocket server
 After=network.target
 
 [Service]
+Environment="PYTHONUNBUFFERED=1"
 ExecStart=${PYTHON} ${PROJECT}/controller.py
 Type=simple
 Restart=always
