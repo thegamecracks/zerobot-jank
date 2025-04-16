@@ -130,8 +130,13 @@ def update_nginx_config(*, dry_run: bool) -> None:
         print("Removing default nginx site configuration...")
         default.unlink()
 
-    sites = list(Path("etc/nginx/sites-available").iterdir())
-    if not sites:
+    src_sites = list(Path("etc/nginx/sites-available").iterdir())
+    dest_sites: list[Path] = [
+        Path("/etc/nginx/sites-available").joinpath(path.name)
+        for path in src_sites
+    ]
+
+    if not src_sites:
         pass
     elif dry_run:
         print("Would copy nginx configuration to /etc/nginx/sites-available/")
@@ -139,16 +144,15 @@ def update_nginx_config(*, dry_run: bool) -> None:
         print("Would reload nginx")
     else:
         print("Copying nginx configuration to /etc/nginx/sites-available/...")
-        for path in sites:
-            content = path.read_text("utf8")
+        for src, dest in zip(src_sites, dest_sites):
+            content = src.read_text("utf8")
             content = replace_site_substitutions(content)
-            dest = Path("/etc/nginx/sites-available").joinpath(path.name)
             dest.write_text(content)
 
         print("Adding symlinks to /etc/nginx/sites-enabled/...")
-        for path in sites:
-            dest = Path("/etc/nginx/sites-enabled").joinpath(path.name)
-            dest.symlink_to(path)
+        for dest in dest_sites:
+            link = Path("/etc/nginx/sites-enabled").joinpath(dest.name)
+            link.symlink_to(dest)
 
         wait_for_nginx_conf()
         print("Reloading nginx...")
