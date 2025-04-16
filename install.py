@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 import argparse
 import getpass
-import io
 import platform
+import shutil
 import string
 import subprocess
 import sys
 import tarfile
+import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -88,12 +89,13 @@ def maybe_download_mediamtx(*, dry_run: bool) -> None:
         return print("Would download mediamtx to /usr/local/bin/")
 
     print("Downloading mediamtx...")
-    with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
-        f = io.BytesIO(response.read())
+    with tempfile.TemporaryFile("wb+") as f:
+        with urllib.request.urlopen(MEDIAMTX_SOURCES[arch]) as response:
+            shutil.copyfileobj(response, f)
 
-    print("Extracting to /usr/local/bin/...")
-    with tarfile.open(fileobj=f, mode="r:gz") as archive:
-        archive.extract("mediamtx", "/usr/local/bin")
+        print("Extracting to /usr/local/bin/...")
+        with tarfile.open(fileobj=f, mode="r:gz") as archive:
+            archive.extract("mediamtx", "/usr/local/bin")
 
 
 def update_apt(apt_cache: AptCache, *, dry_run: bool) -> None:
