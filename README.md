@@ -82,3 +82,9 @@ perform without modifying your system.
 > Avoid using this robot on a public network, as there is no authentication required
 > to access the dashboard or camera feed. Consider installing a firewall to prevent
 > unauthorized TCP connections on port 22 (SSH), port 80 (HTTP), and port 8889 (WebRTC).
+
+## License
+
+This project is written under the [MIT License].
+
+[MIT License]: /LICENSE
