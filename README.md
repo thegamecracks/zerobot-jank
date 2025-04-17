@@ -1,5 +1,8 @@
 # Zerobot
 
+![](/docs/images/robot.jpg)
+![](/docs/images/dashboard.jpg)
+
 ## Software
 
 This repository comprises of the following components:
