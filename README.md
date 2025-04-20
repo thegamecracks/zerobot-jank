@@ -8,9 +8,9 @@
 This repository comprises of the following components:
 - A websocket server to receive movement input, [controller.py](/controller.py)
 - An installer script, [install.py](/install.py)
-- A [MediaMTX] configuration file to stream Raspberry Pi Camera over WebRTC
-- A [Nginx] configuration file to host the web dashboard
-- Systemd service files
+- A [MediaMTX] configuration file to stream the Raspberry Pi Camera over WebRTC
+- An [Nginx] configuration file to host the web dashboard
+- Systemd service configuration files
 
 [MediaMTX]: https://github.com/bluenviron/mediamtx
 [Nginx]: https://nginx.org/en/
@@ -18,7 +18,7 @@ This repository comprises of the following components:
 ## System Requirements
 
 The project must run on Raspberry Pi 12 (Bookworm) or newer, whether 32-bit or 64-bit.
-The distribution should have the following `apt` packages pre-installed,
+Your image should already have these `apt` packages pre-installed,
 but if not, you must download them before running the installer script:
 - `python3-venv`
 - `rpicam-apps`
@@ -53,16 +53,16 @@ but if not, you must download them before running the installer script:
    $ sudo ./install.py --force-mediamtx-arch armv7l
    ```
 
-The installer should perform the following operations:
+Upon execution, the installer should perform the following operations:
 1. Verify that your camera can be detected by the Raspberry Pi's modern camera stack
    - If you're stuck here, see ["What to do if your camera is not detected"]
 2. Download the `mediamtx` binary to `/usr/local/bin` (only if not present)
 3. Install the `nginx` and `python3-dev` packages (only if not present)
 4. Copy the web dashboard's files to `/var/www/html/zerobot/`
-5. Add or update the nginx site configuration at `/etc/nginx/sites-*/`
+5. Add the nginx site configuration to `/etc/nginx/sites-*/`
 6. Create a Python virtual environment in this project directory
-   and install packages from `requirements.txt` (only if not present)
-7. Add or update these systemd services, `zerobot-controller` and `zerobot-mediamtx`,
+   and install dependencies listed in `requirements.txt` (only if not present)
+7. Add the systemd services, `zerobot-controller` and `zerobot-mediamtx`,
    to `/etc/systemd/system/`
 8. Reload the systemd daemon and restart the above services
 
